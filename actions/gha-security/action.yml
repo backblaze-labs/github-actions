@@ -29,7 +29,7 @@ inputs:
   zizmor-version:
     description: Exact zizmor version to run.
     required: false
-    default: "1.25.2"
+    default: "1.22.0"
   zizmor-config:
     description: Optional path to a zizmor config file, relative to the caller repository.
     required: false
