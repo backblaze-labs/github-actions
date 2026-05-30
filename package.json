@@ -1,0 +1,21 @@
+{
+  "name": "@backblaze-labs/github-actions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared non-Marketplace GitHub Actions automation for Backblaze Labs projects.",
+  "bin": {
+    "gha-check-action-pins": "./scripts/check-action-pins.mjs",
+    "gha-format-workflows": "./scripts/format-workflows.mjs"
+  },
+  "scripts": {
+    "check:actions": "node scripts/check-action-pins.mjs --root .",
+    "check:format": "node scripts/format-workflows.mjs --root . --check",
+    "format:actions": "node scripts/format-workflows.mjs --root . --write && node scripts/check-action-pins.mjs --root . --fix"
+  },
+  "dependencies": {
+    "prettier": "3.6.2"
+  },
+  "packageManager": "pnpm@11.4.0"
+}
+

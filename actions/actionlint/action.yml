@@ -20,4 +20,3 @@ runs:
       run: |
         set -euo pipefail
         bash "${GITHUB_ACTION_PATH}/../../scripts/actionlint.sh" ${{ inputs.args }}
-

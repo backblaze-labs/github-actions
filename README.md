@@ -13,59 +13,40 @@ published to npm and does not need to be listed in GitHub Marketplace.
 - `actions/check-action-pins`: checks workflow and action YAML files for remote
   `uses:` references that are not pinned to full 40-character commit SHAs with
   same-line exact version comments such as `# v6.0.2`.
-- `actions/gha-security`: direct composite action that runs both checks.
-- `.github/workflows/gha-security.yml`: reusable workflow for consumer
-  repositories. It runs `actionlint`, the Backblaze pin policy, and `zizmor`.
+- `actions/gha-security`: the primary composite action. It scans the checked-out
+  caller repository with `actionlint`, the Backblaze pin policy, and `zizmor`.
 
-## Recommended Consumer Workflow
+## Recommended Usage
 
-Create a tiny workflow in each repository:
+Add one composite-action step to an existing CI/security workflow after checkout:
 
 ```yaml
-name: GitHub Actions security
-
-on:
-  pull_request:
-    paths:
-      - ".github/**"
-      - "action.yml"
-      - "action.yaml"
-      - "actions/**"
-  push:
-    branches: [main]
-    paths:
-      - ".github/**"
-      - "action.yml"
-      - "action.yaml"
-      - "actions/**"
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  actions: read
-
 jobs:
   gha-security:
-    uses: backblaze-labs/github-actions/.github/workflows/gha-security.yml@<full-sha>
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: backblaze-labs/github-actions/actions/gha-security@<full-sha> # vX.Y.Z
 ```
 
-Use a full commit SHA for `<full-sha>`. If you also enable GitHub's organization
-policy requiring full-SHA action pins, this caller workflow will satisfy it.
+The composite action scans the caller repository checkout. By default it covers:
 
-## Direct Composite Action Usage
+- `.github/workflows/**/*.yml`
+- `.github/workflows/**/*.yaml`
+- `.github/actions/**/*.yml`
+- `.github/actions/**/*.yaml`
+- `actions/**/*.yml`
+- `actions/**/*.yaml`
+- root `action.yml` / `action.yaml`
 
-If a repository already has a security or lint job and only needs the checks:
+Use a full commit SHA for `<full-sha>` and an exact version comment for the
+release marker that SHA represents.
 
-```yaml
-steps:
-  - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    with:
-      persist-credentials: false
-
-  - uses: backblaze-labs/github-actions/actions/gha-security@<full-sha>
-```
-
-Individual actions are also available:
+Individual lower-level actions are available for specialized jobs, but the
+preferred interface for consumer repositories is the single composite action:
 
 ```yaml
 - uses: backblaze-labs/github-actions/actions/actionlint@<full-sha>
@@ -92,7 +73,7 @@ repositories.
 Prefer immutable consumer pins:
 
 ```yaml
-uses: backblaze-labs/github-actions/.github/workflows/gha-security.yml@<full-sha>
+uses: backblaze-labs/github-actions/actions/gha-security@<full-sha> # vX.Y.Z
 ```
 
 Optionally create protected semver tags (`v1.0.0`, `v1`) for human discovery,
@@ -100,18 +81,40 @@ but consumers should pin by commit SHA in CI. Dependabot can update same-line
 version comments for GitHub Actions pins when configured for the `github-actions`
 ecosystem.
 
-## Local Checks
+## Local Formatting And Checks
 
 From this repository:
 
 ```sh
 bash scripts/actionlint.sh
 node scripts/check-action-pins.mjs --root .
+node scripts/check-action-pins.mjs --root . --fix
+pnpm format:actions
 ```
 
-From a consumer repository, after checking out this repository's action:
+From a consumer repository with this repository checked out as a sibling:
 
 ```sh
-node /path/to/github-actions/scripts/check-action-pins.mjs --root /path/to/consumer
+node ../github-actions/scripts/format-workflows.mjs --root . --write --use-npx
+node ../github-actions/scripts/check-action-pins.mjs --root . --fix
+bash ../github-actions/scripts/actionlint.sh
 ```
 
+The formatter uses Prettier for workflow/action YAML. If Prettier is already
+installed in the consumer repo or in this package, it uses that. Otherwise,
+`--use-npx` runs pinned `prettier@3.6.2`.
+
+The pin fixer only auto-fixes exact semver refs:
+
+```yaml
+- uses: actions/checkout@v6.0.2
+```
+
+becomes:
+
+```yaml
+- uses: actions/checkout@<full-sha> # v6.0.2
+```
+
+Mutable or ambiguous refs such as `@main`, `@master`, or `@v1` still fail and
+must be changed by hand to an exact version first.

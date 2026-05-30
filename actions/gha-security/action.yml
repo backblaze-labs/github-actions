@@ -3,7 +3,7 @@ description: Run Backblaze's language-agnostic GitHub Actions security checks.
 
 inputs:
   working-directory:
-    description: Directory containing the repository to scan.
+    description: Directory containing the checked-out caller repository to scan.
     required: false
     default: .
   actionlint:
@@ -14,6 +14,26 @@ inputs:
     description: Enforce full-SHA action pins with exact version comments.
     required: false
     default: "true"
+  zizmor:
+    description: Run zizmor static analysis.
+    required: false
+    default: "true"
+  zizmor-persona:
+    description: "zizmor persona: regular, pedantic, or auditor."
+    required: false
+    default: pedantic
+  zizmor-online-audits:
+    description: Allow zizmor to use the GitHub API for online audits.
+    required: false
+    default: "false"
+  zizmor-version:
+    description: Exact zizmor version to run.
+    required: false
+    default: "1.25.2"
+  zizmor-config:
+    description: Optional path to a zizmor config file, relative to the caller repository.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -33,3 +53,14 @@ runs:
         set -euo pipefail
         node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "${{ inputs.working-directory }}"
 
+    - name: Run zizmor
+      if: ${{ inputs.zizmor == 'true' }}
+      uses: zizmorcore/zizmor-action@0dce2577a4760a2749d8cfb7a84b7d5585ebcb7d # v0.5.0
+      with:
+        advanced-security: false
+        annotations: true
+        config: ${{ inputs.zizmor-config }}
+        inputs: ${{ inputs.working-directory }}
+        online-audits: ${{ inputs.zizmor-online-audits }}
+        persona: ${{ inputs.zizmor-persona }}
+        version: ${{ inputs.zizmor-version }}
