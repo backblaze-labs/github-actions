@@ -16,7 +16,14 @@ runs:
   steps:
     - name: Run actionlint
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
+      env:
+        ACTIONLINT_ARGS: ${{ inputs.args }}
+        ACTIONLINT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
-        bash "${GITHUB_ACTION_PATH}/../../scripts/actionlint.sh" ${{ inputs.args }}
+        cd -- "$ACTIONLINT_WORKING_DIRECTORY"
+        actionlint_args=()
+        if [ -n "$ACTIONLINT_ARGS" ]; then
+          read -r -a actionlint_args <<< "$ACTIONLINT_ARGS"
+        fi
+        bash "${GITHUB_ACTION_PATH}/../../scripts/actionlint.sh" "${actionlint_args[@]}"

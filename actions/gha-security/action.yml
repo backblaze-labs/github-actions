@@ -41,17 +41,21 @@ runs:
     - name: Run actionlint
       if: ${{ inputs.actionlint == 'true' }}
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
+      env:
+        GHA_SECURITY_WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
+        cd -- "$GHA_SECURITY_WORKING_DIRECTORY"
         bash "${GITHUB_ACTION_PATH}/../../scripts/actionlint.sh"
 
     - name: Check GitHub Actions pins
       if: ${{ inputs.action-pins == 'true' }}
       shell: bash
+      env:
+        GHA_SECURITY_WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
-        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "${{ inputs.working-directory }}"
+        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "$GHA_SECURITY_WORKING_DIRECTORY"
 
     - name: Run zizmor
       if: ${{ inputs.zizmor == 'true' }}

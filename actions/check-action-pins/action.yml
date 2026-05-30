@@ -12,6 +12,8 @@ runs:
   steps:
     - name: Check GitHub Actions pins
       shell: bash
+      env:
+        CHECK_ACTION_PINS_ROOT: ${{ inputs.root }}
       run: |
         set -euo pipefail
-        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "${{ inputs.root }}"
+        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "$CHECK_ACTION_PINS_ROOT"
