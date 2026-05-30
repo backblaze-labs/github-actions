@@ -1,0 +1,26 @@
+name: GitHub Actions security
+
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+      - "action.yml"
+      - "action.yaml"
+      - "actions/**"
+  push:
+    branches: [main]
+    paths:
+      - ".github/**"
+      - "action.yml"
+      - "action.yaml"
+      - "actions/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gha-security:
+    uses: backblaze-labs/github-actions/.github/workflows/gha-security.yml@<full-sha>
+
