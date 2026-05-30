@@ -1,0 +1,6 @@
+# Shared CI/CD infrastructure needs security-aware review.
+/.github/      @backblaze-labs/maintainers
+/actions/      @backblaze-labs/maintainers
+/scripts/      @backblaze-labs/maintainers
+/SECURITY.md   @backblaze-labs/maintainers
+

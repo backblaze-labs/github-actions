@@ -1,0 +1,18 @@
+name: Backblaze action pin policy
+description: Enforce full-SHA GitHub Actions refs with exact version comments.
+
+inputs:
+  root:
+    description: Repository root to scan.
+    required: false
+    default: .
+
+runs:
+  using: composite
+  steps:
+    - name: Check GitHub Actions pins
+      shell: bash
+      run: |
+        set -euo pipefail
+        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "${{ inputs.root }}"
+

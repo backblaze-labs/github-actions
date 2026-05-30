@@ -1,0 +1,35 @@
+name: Backblaze GitHub Actions security checks
+description: Run Backblaze's language-agnostic GitHub Actions security checks.
+
+inputs:
+  working-directory:
+    description: Directory containing the repository to scan.
+    required: false
+    default: .
+  actionlint:
+    description: Run actionlint.
+    required: false
+    default: "true"
+  action-pins:
+    description: Enforce full-SHA action pins with exact version comments.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Run actionlint
+      if: ${{ inputs.actionlint == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        bash "${GITHUB_ACTION_PATH}/../../scripts/actionlint.sh"
+
+    - name: Check GitHub Actions pins
+      if: ${{ inputs.action-pins == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        node "${GITHUB_ACTION_PATH}/../../scripts/check-action-pins.mjs" --root "${{ inputs.working-directory }}"
+
