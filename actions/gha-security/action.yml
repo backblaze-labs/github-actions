@@ -59,12 +59,24 @@ runs:
 
     - name: Run zizmor
       if: ${{ inputs.zizmor == 'true' }}
-      uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
-      with:
-        advanced-security: false
-        annotations: true
-        config: ${{ inputs.zizmor-config }}
-        inputs: ${{ inputs.working-directory }}
-        online-audits: ${{ inputs.zizmor-online-audits }}
-        persona: ${{ inputs.zizmor-persona }}
-        version: ${{ inputs.zizmor-version }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GHA_SECURITY_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        GHA_SECURITY_ZIZMOR_CONFIG: ${{ inputs.zizmor-config }}
+        GHA_SECURITY_ZIZMOR_ONLINE_AUDITS: ${{ inputs.zizmor-online-audits }}
+        GHA_SECURITY_ZIZMOR_PERSONA: ${{ inputs.zizmor-persona }}
+        GHA_SECURITY_ZIZMOR_VERSION: ${{ inputs.zizmor-version }}
+      run: |
+        set -euo pipefail
+        [[ "$GHA_SECURITY_ZIZMOR_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?(\.dev[0-9]+)?$ ]] \
+          || { echo "::error::zizmor-version must be an exact X.Y.Z version"; exit 1; }
+        zizmor_dir="${RUNNER_TEMP}/zizmor"
+        rm -rf -- "$zizmor_dir"
+        python3 -m pip install --quiet --no-input --disable-pip-version-check \
+          --only-binary=:all: --no-deps --target "$zizmor_dir" "zizmor==${GHA_SECURITY_ZIZMOR_VERSION#v}"
+        args=("--persona=${GHA_SECURITY_ZIZMOR_PERSONA}" --format=github --color=always)
+        [[ "$GHA_SECURITY_ZIZMOR_ONLINE_AUDITS" == "true" ]] || args+=(--no-online-audits)
+        [[ -z "$GHA_SECURITY_ZIZMOR_CONFIG" ]] || args+=("--config=${GHA_SECURITY_ZIZMOR_CONFIG}")
+        cd -- "$GITHUB_WORKSPACE"
+        "${zizmor_dir}/bin/zizmor" "${args[@]}" -- "$GHA_SECURITY_WORKING_DIRECTORY"
